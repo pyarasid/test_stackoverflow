@@ -39,7 +39,7 @@ addUnits <- function(n) {
 
 mill <-  scales::unit_format(unit = "M", scale = 1e-6, accuracy = .01)
 
-#Creating function for bar chart 
+#Creating function for dot plot on the input panel 
 plot_test <- function(country_name, vc_cvx){
   
   if(vc_cvx==FALSE){
@@ -122,6 +122,7 @@ plot_test <- function(country_name, vc_cvx){
   }
 }
 
+
 ui <- bootstrapPage(
   useShinyjs(),
   navbarPage(title = "", inverse = TRUE, 
@@ -159,12 +160,14 @@ ui <- bootstrapPage(
                                         
                                         div(style = "margin-top:-5px"),
                                         
+                                        #radio button on the input panel which draw different distributions of choropleth
                                         radioButtons("maptype", list(tags$span(style = "font-weight: bold;font-size: 12px; color:#262626", "")),
                                                      choiceNames =  list(tags$span(style = "font-size: 12px; color:#262626", "A"),
                                                                          tags$span(style = "font-size: 12px; color:#262626", "B"), 
                                                                          tags$span(style = "font-size: 12px; color:#262626", "C")),
                                                      choiceValues = c("A", "B", "C")),
                                         
+                                        #This checkox option which updates the dot plot if chosen
                                         checkboxInput("cvx_check", h5(tags$span(style="font-size: 12px"," check to include some data in calculations"),
                                                                       tags$style(type="text/css", "#q01_1 {vertical-align: top;}"),
                                                                       bsButton("q01_1", label="", icon=icon("question"), style="info", size="extra-small")),
@@ -178,10 +181,12 @@ ui <- bootstrapPage(
                                         
                                         div(style = "margin-top:-30px"),
                                         
+                                        #the input for the country
                                         selectInput("country", "",choices = NULL, width = "150px"),
                                         
                                         div(style = "margin-top:-17px"),
                                         
+                                        #plotting the dot plot
                                         plotOutput("plot_test", height = "200px", width = "100%")%>% withSpinner(),
                                         
                                         
@@ -197,6 +202,7 @@ ui <- bootstrapPage(
 
 server <- function(input, output, session) {
   
+#updating the list of countires in the input based on the list available in the shapefile  
   updateSelectInput(session,
                     "country", choices = world_polygon_app$nam_lng)
   
@@ -208,11 +214,12 @@ server <- function(input, output, session) {
       addResetMapButton()  
   })
   
-  #plot function
+  #dot plot function
   output$plot_test <- renderPlot({
     plot_test(input$country,  input$cvx_check)
   })
   
+  #filtering the polygon values and the legend based on the check box selection and different radio button selection
   filtered_world_polygon <- reactive({
     
     order_of_75per <- c("Below 65 Million","65 - 145 Million", "145 - 275 Million",
@@ -313,20 +320,23 @@ server <- function(input, output, session) {
     }
   })
   
+#palette fucntion for 1st legend  
   factpal <- reactive({
     colorFactor("Blues", filtered_world_polygon()$cst_rng_75)
   })
   
-  
+  #palette fucntion for 2st legend    
   factpal_pop <- reactive({
     colorFactor("Oranges", filtered_world_polygon()$cst_rng_rsk)
     
   })
   
+  #palette fucntion for 3st legend  
   factpal_health <- reactive({
     colorFactor("Greens", filtered_world_polygon()$st_rng_hlth)
   })
-  
+
+#creating table which will show up when someone clicks a country polygon  (when radio button A is selected)  
   my_poup_70p <- reactive({
     
     if(input$cvx_check==FALSE){
@@ -367,6 +377,7 @@ server <- function(input, output, session) {
     
   })
   
+  #creating table which will show up when someone clicks a country polygon  (when radio button B is selected)  
   my_poup_risky <- reactive({
     
     if(input$cvx_check==FALSE){
@@ -406,6 +417,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #creating table which will show up when someone clicks a country polygon  (when radion button C is selected)  
   my_poup_health <- reactive({
     
     if(input$cvx_check==FALSE){
@@ -443,6 +455,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #based on radio and checkbox selection the leaflet map updates
   observe({
     if(input$maptype=="A" & input$cvx_check==FALSE){
       isolate({
@@ -542,6 +555,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #This is to observe the click on the polygons, and the chart and the country input on the panel updates
   observeEvent(input$map_shape_click, {
     if(input$maptype=="A"){
       
@@ -561,6 +575,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #This is to observe the click on the polygons, and the chart and the country input on the panel updates
   observeEvent(input$map_shape_click,{
     if(input$maptype=="B"){
       
@@ -578,6 +593,7 @@ server <- function(input, output, session) {
     }
   })
   
+  #This is to observe the click on the polygons, and the chart and the country input on the panel updates
   observeEvent(input$map_shape_click, {
     if(input$maptype=="C"){
       
